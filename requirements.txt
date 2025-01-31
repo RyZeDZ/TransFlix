@@ -1,0 +1,4 @@
+ffmpeg-python
+vosk
+argostranslate
+pyqt5
