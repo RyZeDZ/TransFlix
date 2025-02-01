@@ -14,7 +14,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QStandardPaths, QObject, pyqtSignal, QUrl, QSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QSizePolicy
 from vosk import Model, KaldiRecognizer
 
 
@@ -310,6 +310,7 @@ class PreviewWindow(QtWidgets.QMainWindow):
 
         self.media_player = QMediaPlayer()
         self.video_widget = QVideoWidget()
+        self.video_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.media_player.setVideoOutput(self.video_widget)
         layout.addWidget(self.video_widget, stretch = 3)
         self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_path)))
