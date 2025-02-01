@@ -4,7 +4,6 @@ import json
 import sys
 import threading
 from pathlib import Path
-from datetime import timedelta
 
 import wave
 
@@ -48,8 +47,10 @@ class ProcessVideo:
 
 
     def _format_timestamp(self, seconds):
-        td = timedelta(seconds = seconds)
-        return str(td)[:-3].replace('.', ',')
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{secs:06.3f}".replace('.', ',')
 
 
     def _save_srt(self, subtitles):
