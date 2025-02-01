@@ -11,7 +11,7 @@ import ffmpeg
 import argostranslate.translate
 import argostranslate.package
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QStandardPaths, QObject, pyqtSignal, QUrl
+from PyQt5.QtCore import QStandardPaths, QObject, pyqtSignal, QUrl, QSettings
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QFileDialog
@@ -159,8 +159,12 @@ class Translator:
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+        QtWidgets.QApplication.setOrganizationName("ryzedz")
+        QtWidgets.QApplication.setApplicationName("TransFlix")
+        self.settings = QSettings()
         self.video_path = None
-        self.save_dir = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+        default_save_dir = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+        self.save_dir = self.settings.value("save_dir", default_save_dir)
         self.signals = Signals()
         self.initUI()
         self.signals.finished.connect(self.on_processing_finished)
@@ -279,6 +283,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         if dir_path:
             self.save_dir = dir_path
+            self.settings.setValue("save_dir", self.save_dir)
             self.label_folder.setText(f"Save to: {dir_path}")
 
 
