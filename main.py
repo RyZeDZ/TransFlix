@@ -114,6 +114,7 @@ class ProcessVideo:
                             text = " ".join([word["word"] for word in words if (word["conf"] > self.confidence)])
                             subtitles.append(f"{subtitles_index}\n{start} --> {end}\n{text}\n")
                             subtitles_index += 1
+        os.remove(wav_file)
         return self._save_srt(subtitles)
 
 
@@ -398,6 +399,7 @@ class PreviewWindow(QtWidgets.QMainWindow):
             )
             self.close()
             self.main_window.show()
+        os.remove(self.srt_path)
 
 
     def show_success(self, output_path):
