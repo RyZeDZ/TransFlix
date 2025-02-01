@@ -167,6 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.save_dir = self.settings.value("save_dir", default_save_dir)
         self.signals = Signals()
         self.initUI()
+        center_window(self)
         self.signals.finished.connect(self.on_processing_finished)
         self.signals.error.connect(self.on_processing_error)
 
@@ -298,6 +299,7 @@ class PreviewWindow(QtWidgets.QMainWindow):
         self.signals.burn_finished.connect(self.on_burn_finished)
         self.media_player = QMediaPlayer()
         self.initUI()
+        self.showMaximized()
 
 
     def initUI(self):
@@ -313,6 +315,7 @@ class PreviewWindow(QtWidgets.QMainWindow):
         self.media_player.play()
 
         self.text_edit = QtWidgets.QTextEdit()
+        self.text_edit.setFontPointSize(16)
         with open(self.srt_path, "r") as f:
             self.text_edit.setText(f.read())
         layout.addWidget(self.text_edit, stretch = 2)
@@ -418,6 +421,7 @@ class SuccessWindow(QtWidgets.QDialog):
         super().__init__()
         self.output_path = output_path
         self.initUI()
+        center_window(self)
 
     def initUI(self):
         self.setWindowTitle("Success")
@@ -442,6 +446,15 @@ class Signals(QObject):
     finished = pyqtSignal(str)
     error = pyqtSignal(str)
     burn_finished = pyqtSignal(str, str)
+
+
+def center_window(window):
+    screen = window.screen()
+    screen_geometry = screen.availableGeometry()
+    center = screen_geometry.center()
+    window_geometry = window.frameGeometry()
+    window_geometry.moveCenter(center)
+    window.move(window_geometry.topLeft())
 
 
 if __name__ == "__main__":
