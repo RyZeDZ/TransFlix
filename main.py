@@ -11,10 +11,11 @@ import ffmpeg
 import argostranslate.translate
 import argostranslate.package
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QStandardPaths, QObject, pyqtSignal, QUrl, QSettings
+from PyQt5.QtCore import QStandardPaths, QObject, pyqtSignal, QUrl, QSettings, Qt
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import QFileDialog, QSizePolicy
+from PyQt5.QtWidgets import QFileDialog, QSizePolicy, QPushButton
+from fsspec.utils import seek_delimiter
 from vosk import Model, KaldiRecognizer
 
 
@@ -174,7 +175,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def initUI(self):
-        self.setWindowTitle("Subtitle Maker")
+        self.setWindowTitle("TransFlix")
         self.setGeometry(100, 100, 400, 200)
         layout = QtWidgets.QVBoxLayout()
 
@@ -314,7 +315,54 @@ class PreviewWindow(QtWidgets.QMainWindow):
         self.media_player.setVideoOutput(self.video_widget)
         layout.addWidget(self.video_widget, stretch = 3)
         self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_path)))
+        self.media_player.setVolume(50)
+        self.media_player.positionChanged.connect(self.update_slider)
         self.media_player.play()
+
+        self.sliders_layout = QtWidgets.QHBoxLayout()
+        self.controls_layout = QtWidgets.QHBoxLayout()
+        self.audio_layout = QtWidgets.QHBoxLayout()
+        self.main_controls_layout = QtWidgets.QVBoxLayout()
+        self.final_layout = QtWidgets.QVBoxLayout()
+
+        self.button_backward = QtWidgets.QPushButton("←")
+        self.button_backward.clicked.connect(self.seek_backward)
+        self.controls_layout.addWidget(self.button_backward)
+
+        self.button_play = QtWidgets.QPushButton("⏸")
+        self.button_play.clicked.connect(self.toggle_play_pause)
+        self.controls_layout.addWidget(self.button_play)
+
+        self.button_forward = QtWidgets.QPushButton("→")
+        self.button_forward.clicked.connect(self.seek_forward)
+        self.controls_layout.addWidget(self.button_forward)
+
+        self.seek_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.seek_slider.setRange(0, 100)
+        self.seek_slider.sliderMoved.connect(self.set_position)
+        self.sliders_layout.addWidget(self.seek_slider, stretch = 10)
+
+        self.separator = QtWidgets.QLabel("|")
+        self.sliders_layout.addWidget(self.separator)
+
+        self.button_mute = QtWidgets.QPushButton("🔊")
+        self.button_mute.clicked.connect(self.toggle_mute)
+        self.sliders_layout.addWidget(self.button_mute)
+
+        self.volume_slider = QtWidgets.QSlider()
+        self.volume_slider.setOrientation(Qt.Horizontal)
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(50)
+        self.volume_slider.valueChanged.connect(self.set_volume)
+        self.sliders_layout.addWidget(self.volume_slider, stretch = 1)
+
+        self.controls_layout.setAlignment(Qt.AlignCenter)
+        self.main_controls_layout.addLayout(self.sliders_layout)
+        self.main_controls_layout.addLayout(self.controls_layout)
+        self.main_controls_layout.addLayout(self.audio_layout)
+
+        self.final_layout.addLayout(self.main_controls_layout)
+        layout.addLayout(self.final_layout)
 
         self.text_edit = QtWidgets.QTextEdit()
         self.text_edit.setFontPointSize(16)
@@ -329,6 +377,48 @@ class PreviewWindow(QtWidgets.QMainWindow):
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+
+
+    def toggle_play_pause(self):
+        if self.media_player.state() == QMediaPlayer.PlayingState:
+            self.media_player.pause()
+            self.button_play.setText("▶")
+        else:
+            self.media_player.play()
+            self.button_play.setText("⏸")
+
+
+    def seek_backward(self):
+        current_position = self.media_player.position()
+        self.media_player.setPosition(max(0, current_position - 5000))
+
+
+    def seek_forward(self):
+        current_position = self.media_player.position()
+        duration = self.media_player.duration()
+        self.media_player.setPosition(min(duration, current_position + 5000))
+
+
+    def toggle_mute(self):
+        is_muted = self.media_player.isMuted()
+        self.media_player.setMuted(not is_muted)
+        self.media_player.setVolume(50 if (not is_muted and self.media_player.volume() == 0) else self.media_player.volume())
+        self.volume_slider.setValue(50 if (not is_muted and self.media_player.volume() == 0) else self.media_player.volume())
+        self.button_mute.setText("🔇" if not is_muted else "🔊")
+
+
+    def set_volume(self, value):
+        self.media_player.setVolume(value)
+        self.button_mute.setText("🔇" if value == 0 else "🔊")
+
+
+    def update_slider(self, position):
+        if self.media_player.duration() > 0:
+            self.seek_slider.setValue(int((position / self.media_player.duration()) * 100))
+
+
+    def set_position(self, value):
+        self.media_player.setPosition(int((value / 100) * self.media_player.duration()))
 
 
     def start_burning(self):
