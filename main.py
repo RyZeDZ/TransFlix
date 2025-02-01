@@ -323,6 +323,7 @@ class PreviewWindow(QtWidgets.QMainWindow):
 
     def start_burning(self):
         self.button_finish.setEnabled(False)
+        self.media_player.stop()
         edited_srt = self.text_edit.toPlainText()
         translator = Translator()
         translated_srt = translator.translate(edited_srt)
